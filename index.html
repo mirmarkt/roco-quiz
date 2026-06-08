@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>测试你是什么洛克王国精灵</title>
+<style>
+:root {
+  --bg: #fafafa; --fg: #1a1a1a; --card: #fff; --muted: #666;
+  --border: #e5e5e5; --accent: #7c3aed; --accent2: #ec4899;
+  --good: #16a34a; --warn: #ea580c; --err: #dc2626;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f10; --fg: #f0f0f0; --card: #1a1a1d; --muted: #9ca3af;
+    --border: #2a2a2d; --accent: #a78bfa; --accent2: #f472b6;
+    --good: #4ade80; --warn: #fb923c; --err: #f87171;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+               "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
+  line-height: 1.6; -webkit-font-smoothing: antialiased;
+}
+.container { max-width: 680px; margin: 0 auto; padding: 24px 16px 60px; }
+header { text-align: center; margin-bottom: 32px; }
+header h1 { font-size: 28px; margin: 0 0 8px; background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text; background-clip: text; color: transparent; }
+header .subtitle { color: var(--muted); font-size: 14px; margin: 0; }
+.card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+  padding: 24px; margin-bottom: 16px;
+}
+.card h2 { font-size: 22px; margin: 0 0 14px; }
+.card h3 { font-size: 17px; margin: 0 0 12px; }
+.card p { margin: 8px 0; }
+.card ul { padding-left: 22px; margin: 8px 0; }
+.card li { margin: 4px 0; }
+.btn {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: white; border: none; border-radius: 10px; padding: 12px 32px;
+  font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.2s, opacity 0.2s;
+}
+.btn:hover { transform: translateY(-1px); opacity: 0.92; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.btn-secondary { background: var(--border); color: var(--fg); }
+.btn-secondary:hover { opacity: 0.8; }
+.action-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.question-card { text-align: center; }
+.progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 24px; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2));
+                 transition: width 0.3s; }
+.q-num { color: var(--muted); font-size: 13px; margin-bottom: 8px; }
+.q-text { font-size: 17px; font-weight: 500; margin: 14px 0 24px; }
+.q-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.q-option {
+  background: var(--bg); border: 2px solid var(--border); border-radius: 12px;
+  padding: 16px 14px; cursor: pointer; font-size: 14px; line-height: 1.5;
+  text-align: left; transition: all 0.2s;
+}
+.q-option:hover { border-color: var(--accent); background: var(--card); }
+.q-option.selected-a { border-color: var(--accent); background: linear-gradient(135deg, rgba(124,58,237,0.08), rgba(124,58,237,0.04)); }
+.q-option.selected-b { border-color: var(--accent2); background: linear-gradient(135deg, rgba(236,72,153,0.08), rgba(236,72,153,0.04)); }
+.q-label { font-size: 11px; color: var(--muted); font-weight: 700; margin-bottom: 4px; }
+.q-nav { display: flex; justify-content: space-between; margin-top: 24px; }
+
+/* 分享卡 */
+.share-card {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: white; border-radius: 16px; padding: 28px; text-align: center;
+  margin-bottom: 16px; box-shadow: 0 4px 20px rgba(124,58,237,0.2);
+}
+.share-card .big-type { font-size: 32px; font-weight: 800; margin: 8px 0; letter-spacing: 1px; }
+.share-card .kinsey { font-size: 14px; opacity: 0.95; margin-top: 4px; }
+.share-card .sprite-img {
+  width: 180px; height: 180px; object-fit: contain; background: rgba(255,255,255,0.15);
+  border-radius: 50%; padding: 12px; margin: 8px auto; display: block;
+}
+.share-card .sprite-img-wrap { display: flex; justify-content: center; }
+.share-card .sprite-emoji { font-size: 120px; line-height: 1; margin: 8px 0; }
+
+/* 6 项种族值 */
+.stats-grid { display: flex; flex-direction: column; gap: 10px; margin: 12px 0; }
+.stat-row { display: grid; grid-template-columns: 80px 1fr 40px; align-items: center; gap: 10px; }
+.stat-label { font-size: 13px; font-weight: 600; white-space: nowrap; }
+.stat-bar { height: 16px; background: var(--border); border-radius: 8px; overflow: hidden; position: relative; }
+.stat-fill { height: 100%; border-radius: 8px; transition: width 0.6s ease; min-width: 2px;
+             display: flex; align-items: center; justify-content: flex-end; padding-right: 6px; }
+.stat-val { font-size: 14px; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+
+/* 血脉 + 稀有度 */
+.blood-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
+.blood-cell {
+  border: 1.5px solid var(--border); border-radius: 10px; padding: 12px; text-align: center;
+  background: var(--bg);
+}
+.blood-cell b { display: block; font-size: 13px; margin-bottom: 4px; }
+.blood-cell span { font-size: 11px; color: var(--muted); }
+.blood-cell.active { border-color: var(--accent); background: linear-gradient(135deg, rgba(124,58,237,0.05), rgba(236,72,153,0.05)); }
+.blood-emoji { font-size: 32px; line-height: 1; }
+
+/* 结果板块 */
+.result-section h3 { color: var(--accent); }
+.disclaimer { color: var(--muted); font-size: 13px; line-height: 1.5; }
+.error-msg { color: var(--err); font-size: 13px; }
+
+/* 隐藏款 */
+.share-card.hidden-card {
+  background: linear-gradient(135deg, #1e1b4b, #7c3aed 40%, #db2777 70%, #fbbf24);
+  animation: glow 3s ease-in-out infinite;
+}
+@keyframes glow {
+  0%, 100% { box-shadow: 0 4px 20px rgba(124,58,237,0.4), 0 0 40px rgba(251,191,36,0.2); }
+  50% { box-shadow: 0 4px 30px rgba(124,58,237,0.6), 0 0 60px rgba(251,191,36,0.4); }
+}
+
+.footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 32px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+  <h1>🐾 测试你是什么洛克王国精灵</h1>
+  <p class="subtitle">75 题互动版 · 灵魂动物园出品的洛克王国世界图鉴</p>
+</header>
+<div id="app"></div>
+<div class="footer">
+  图片素材来源于 B站 Wiki · CC BY-NC-SA 4.0<br>
+  洛克王国世界 © 腾讯游戏 · 本项目仅供娱乐 · 非商业用途
+</div>
+</div>
+<script id="quiz-data">
+// 75 题（复用 pig-quiz 的题库，逻辑一致）
+const QUESTIONS = [
+// MBTI 60 题
+{sec:'mbti', dim:'ei', pole:+1, a:'和一群朋友聚会后，你通常感到精力充沛、想继续社交', b:'聚会后你需要独处来"充电"，恢复自己的能量'},
+{sec:'mbti', dim:'ei', pole:-1, a:'你倾向于先思考再开口', b:'你倾向于边说边想，通过说出来整理思路'},
+{sec:'mbti', dim:'ei', pole:+1, a:'在群体中，你自然而然会成为那个引导讨论或活跃气氛的人', b:'你更愿意在边上观察，等真有想法了再发言'},
+{sec:'mbti', dim:'ei', pole:-1, a:'你更喜欢一对一的深度对话', b:'你更喜欢和很多人一起聊，每个话题浅一点没关系'},
+{sec:'mbti', dim:'ei', pole:+1, a:'空闲时间你更可能出门、见人、参加活动', b:'空闲时间你更可能在家看书、追剧、玩自己的项目'},
+{sec:'mbti', dim:'ei', pole:-1, a:'别人觉得你"安静"或"内敛"是常事', b:'别人觉得你"话多"或"外向"是常事'},
+{sec:'mbti', dim:'ei', pole:+1, a:'新环境里你倾向于主动认识人', b:'新环境里你倾向于等别人来找你'},
+{sec:'mbti', dim:'ei', pole:-1, a:'电话响了你倾向于不接，等会儿回过去', b:'电话响了你倾向于立刻接，不喜欢错过'},
+{sec:'mbti', dim:'ei', pole:+1, a:'你说话时常用手势、表情、肢体动作', b:'你说话时更静态，思考时甚至会静止不动'},
+{sec:'mbti', dim:'ei', pole:-1, a:'比起被很多人知道，你更希望被少数人深刻了解', b:'比起被少数人了解，你更喜欢被广泛认识'},
+{sec:'mbti', dim:'ei', pole:+1, a:'连续几天的独处会让你觉得有点闷或失落', b:'连续几天的独处是你最舒服的状态'},
+{sec:'mbti', dim:'ei', pole:-1, a:'你的朋友圈子不大，但每个朋友都挺熟', b:'你的朋友圈子很广，认识很多人但不一定都深交'},
+{sec:'mbti', dim:'ei', pole:+1, a:'你在团队讨论里倾向于先发言带动节奏', b:'你在团队讨论里倾向于后发言总结观点'},
+{sec:'mbti', dim:'ei', pole:-1, a:'写作/打字比当面说话更让你舒服', b:'当面说话比打字更让你舒服'},
+{sec:'mbti', dim:'ei', pole:+1, a:'你常被人说"想到什么就说什么"', b:'你常被人说"想得很深但不太说出来"'},
+{sec:'mbti', dim:'sn', pole:+1, a:'比起理论，你更相信"看得见摸得着"的事实', b:'比起"现在能用的"，你更被"未来可能实现的"吸引'},
+{sec:'mbti', dim:'sn', pole:-1, a:'你常思考事物之间的联系和模式', b:'你更关注具体的事实和细节'},
+{sec:'mbti', dim:'sn', pole:+1, a:'比起"5 年后的愿景"，你更想"这周先把这一步做好"', b:'比起"这周的具体步骤"，你更想"5 年后这事会变成什么样"'},
+{sec:'mbti', dim:'sn', pole:-1, a:'你喜欢探索新概念、新理论、新可能性', b:'你喜欢用已经验证过的方法做事'},
+{sec:'mbti', dim:'sn', pole:+1, a:'你相信经验是最靠谱的老师', b:'你相信直觉和灵感同样重要'},
+{sec:'mbti', dim:'sn', pole:-1, a:'你常被人说"想得太远"或"想得太抽象"', b:'你常被人说"很实际"或"脚踏实地"'},
+{sec:'mbti', dim:'sn', pole:+1, a:'描述事物时你倾向于讲具体细节', b:'描述事物时你倾向于讲整体感觉和大方向'},
+{sec:'mbti', dim:'sn', pole:-1, a:'你常思考"如果...会怎样"的假设场景', b:'你更关注"现在是什么"和"接下来要做什么"'},
+{sec:'mbti', dim:'sn', pole:+1, a:'你喜欢可量化、可测量的东西', b:'你更看重质感和方向感，不一定都要量化'},
+{sec:'mbti', dim:'sn', pole:-1, a:'相比维护现状，你更喜欢打破它、创造新东西', b:'相比推倒重来，你更想持续优化现有的'},
+{sec:'mbti', dim:'sn', pole:+1, a:'你做事前会先收集事实和数据', b:'你做事前会先有个大方向感，再边做边调整'},
+{sec:'mbti', dim:'sn', pole:-1, a:'你常被"如果世界不是这样会怎样"这种问题吸引', b:'你常被"为什么世界是这样"这种问题吸引'},
+{sec:'mbti', dim:'sn', pole:+1, a:'你说话具体，别人听完能立刻知道你要干什么', b:'你说话抽象，别人听完要先理解你的意思'},
+{sec:'mbti', dim:'sn', pole:-1, a:'你经常有"灵感一闪"的时刻', b:'你的想法通常来自长期的积累和思考'},
+{sec:'mbti', dim:'sn', pole:+1, a:'你更喜欢用别人已经验证过的方案', b:'你更喜欢自己摸索出一个新方案'},
+{sec:'mbti', dim:'tf', pole:+1, a:'做决定时你更看重逻辑和客观利弊', b:'做决定时你更看重对人际关系和情感的影响'},
+{sec:'mbti', dim:'tf', pole:-1, a:'你常被人说"很理性"或"冷静"', b:'你常被人说"很感性"或"心软"'},
+{sec:'mbti', dim:'tf', pole:+1, a:'别人找你诉苦，你倾向于帮他们分析问题', b:'别人找你诉苦，你倾向于先陪他们、认同他们的感受'},
+{sec:'mbti', dim:'tf', pole:-1, a:'你追求"公平"多过"和谐"', b:'你追求"和谐"多过"公平"'},
+{sec:'mbti', dim:'tf', pole:+1, a:'批评别人时你会直说，不绕弯子', b:'批评别人时你会注意措辞，先肯定再说问题'},
+{sec:'mbti', dim:'tf', pole:-1, a:'你的决定常受"这件事对谁好/不好"影响', b:'你的决定常受"这件事是否合理"影响'},
+{sec:'mbti', dim:'tf', pole:+1, a:'你相信"对事不对人"', b:'你相信"人对了，事才能对"'},
+{sec:'mbti', dim:'tf', pole:-1, a:'你常被别人的情绪所影响', b:'你常能在情绪激动时保持理性'},
+{sec:'mbti', dim:'tf', pole:+1, a:'你欣赏"就事论事、就理论理"的人', b:'你欣赏"温柔、体贴、照顾他人感受"的人'},
+{sec:'mbti', dim:'tf', pole:-1, a:'看电影时你容易跟着角色哭/笑', b:'看电影时你更多是观察剧情、思考寓意'},
+{sec:'mbti', dim:'tf', pole:+1, a:'吵架时你更想"赢"（证明自己有理）', b:'吵架时你更想"和好"（关系不破裂）'},
+{sec:'mbti', dim:'tf', pole:-1, a:'你重视"被理解"和"被接纳"', b:'你重视"被尊重"和"被认可"'},
+{sec:'mbti', dim:'tf', pole:+1, a:'你更欣赏"独立、有主见"的人', b:'你更欣赏"温柔、善解人意"的人'},
+{sec:'mbti', dim:'tf', pole:-1, a:'做错事时你第一反应是内疚', b:'做错事时你第一反应是分析哪里出了问题'},
+{sec:'mbti', dim:'tf', pole:+1, a:'你相信"真理越辩越明"', b:'你相信"给人留面子"比"争个对错"重要'},
+{sec:'mbti', dim:'jp', pole:+1, a:'出门前你一定会列清单/做计划', b:'出门前你倾向于随机应变'},
+{sec:'mbti', dim:'jp', pole:-1, a:'你更喜欢"留有余地"再决定', b:'你更喜欢"先定下来"再说'},
+{sec:'mbti', dim:'jp', pole:+1, a:'你做事前喜欢把所有信息都搞清楚再行动', b:'你做事前倾向于边做边学，行动第一'},
+{sec:'mbti', dim:'jp', pole:-1, a:'你的桌面/房间常常有点乱，但你知道东西在哪', b:'你的桌面/房间井井有条，每样东西都有固定位置'},
+{sec:'mbti', dim:'jp', pole:+1, a:'deadline 提前一周你就开始紧张', b:'deadline 最后一晚你才通宵'},
+{sec:'mbti', dim:'jp', pole:-1, a:'你常被朋友说"你怎么还不做决定"', b:'你常被朋友说"你想太多了"'},
+{sec:'mbti', dim:'jp', pole:+1, a:'你旅行前会做详细攻略', b:'你旅行前只想大方向，到了再探索'},
+{sec:'mbti', dim:'jp', pole:-1, a:'你常因为"还有别的可能"而推迟决定', b:'你常因为"不决定更难受"而快速拍板'},
+{sec:'mbti', dim:'jp', pole:+1, a:'你喜欢日历上排满事情的充实感', b:'你喜欢日历上留白、不被安排的自由感'},
+{sec:'mbti', dim:'jp', pole:-1, a:'你常开好几个项目/兴趣，同时进行', b:'你倾向于一次专注一件事，做完再做下一件'},
+{sec:'mbti', dim:'jp', pole:+1, a:'计划被打乱时你会烦躁', b:'计划被打乱时你觉得"反正有得玩"'},
+{sec:'mbti', dim:'jp', pole:-1, a:'你常被"灵感/兴趣"驱动做事', b:'你常被"任务/责任"驱动做事'},
+{sec:'mbti', dim:'jp', pole:+1, a:'你买东西前会做功课、查评测', b:'你买东西常凭感觉或冲动'},
+{sec:'mbti', dim:'jp', pole:-1, a:'你享受"边做边调整"的过程', b:'你享受"按计划完成"的感觉'},
+{sec:'mbti', dim:'jp', pole:+1, a:'做决定时你更想要"确定感"', b:'做决定时你更想要"自由度"'},
+// 角色偏好 15 题
+{sec:'role', pole:+1, a:'在亲密关系里你更倾向于主动发起', b:'在亲密关系里你更倾向于等对方先发起'},
+{sec:'role', pole:-1, a:'你常被对方说"你怎么这么被动/害羞"', b:'你常被对方说"你怎么这么主动/强势"'},
+{sec:'role', pole:+1, a:'你更喜欢"主导"或"掌控"节奏', b:'你更喜欢"跟随"或"被引导"'},
+{sec:'role', pole:-1, a:'你倾向于接受对方的安排和决定', b:'你倾向于安排和决定约会怎么过'},
+{sec:'role', pole:+1, a:'你更倾向"保护"和"照顾"对方', b:'你更倾向"被保护"和"被照顾"'},
+{sec:'role', pole:-1, a:'你常被说"很温柔"或"很软"', b:'你常被说"很有力量"或"很有气场"'},
+{sec:'role', pole:+1, a:'你更愿意承担"决策者"角色', b:'你更愿意承担"配合者"角色'},
+{sec:'role', pole:-1, a:'对方主导时你更自在', b:'你主导时你更自在'},
+{sec:'role', pole:+1, a:'你倾向于在关系里"先付出"', b:'你倾向于在关系里"后付出"或"被给予"'},
+{sec:'role', pole:-1, a:'被推进/被追求让你觉得更舒服', b:'推进/追求对方让你觉得更自在'},
+{sec:'role', pole:+1, a:'你更欣赏"独立、强势、有自己想法"的对象', b:'你更欣赏"温柔、依赖、愿意让你照顾"的对象'},
+{sec:'role', pole:-1, a:'你常被说"心很细"或"很会照顾人"', b:'你常被说"比较粗"或"比较自我中心"'},
+{sec:'role', pole:+1, a:'你倾向于表达"我想和你..."或"我希望你..."', b:'你倾向于表达"我听你的"或"你来决定"'},
+{sec:'role', pole:-1, a:'你更愿意让对方发光，自己当陪衬', b:'你更愿意让自己发光，让对方当陪衬'},
+{sec:'role', pole:+1, a:'你倾向于在关系里"制定规则"或"定边界"', b:'你倾向于在关系里"接受规则"或"被告知边界"'},
+];
+</script>
+<script id="result-data">
+// 14 个洛克王国精灵（含 1 个隐藏款：迪莫）
+// 图片 URL 基于 B站 Wiki 路径规则（CDN：patchwiki.biligame.com）
+// 如果加载失败会 fallback 到 emoji
+
+// 注意：图片路径用 `path`（无空格版），因为 URL 不能有空格
+// 但 wiki 文件名是有空格的，所以这是猜测，浏览器加载失败会 fallback 到 emoji
+
+function makeSprite(petKey, fallbackEmoji, name, attr, type, trait, baseRarity) {
+  return {
+    key: petKey,
+    name: name,
+    emoji: fallbackEmoji,
+    imgUrl: '',  // 由用户提供的 wiki 图片 URL（见 README）
+    attr: attr,
+    type: type,
+    trait: trait,
+    desc: '',
+    chatTips: [],
+    baseRarity: baseRarity,
+    hidden: false,
+  };
+}
+
+const SPRITES = {
+  demo: {  // 隐藏款
+    ...makeSprite('迪莫', '🌟', '迪莫', '光', '唯一神 / 全能型', '神秘、低调、强力',
+                  '唯一神'),
+    imgUrl: 'https://patchwiki.biligame.com/images/rocom/thumb/2/2b/sw0puzl5c0n8hu49ryqk7drh1gxtblr.png/720px-JL_dimo.png',
+    desc: '你是精灵中的精灵——传说中的迪莫，洛克王国世界最强的存在。\n\n你不需要向任何人证明自己。你的强大是安静的那种，深不见底。你享受独处，但当你在意的人遇到危险时，你会毫不犹豫地站在最前面。\n\n你不是那种张扬的英雄，你是那种一旦出手就能改变战局的精灵。',
+    chatTips: ['不需要话术，你自己就是气场', '有人问你是谁，就说"迪莫"，两个字足以', '少说话，多做事', '信任你的人会陪你到最后', '偶尔撒娇反差感最致命'],
+    hidden: true,
+  },
+
+  ermao: {
+    ...makeSprite('大耳帽兜', '🎀', '大耳帽兜', '普通', '萌系 / 辅助型', '温柔、戴帽子、内向',
+                  '普通'),
+    imgUrl: 'https://patchwiki.biligame.com/images/rocom/thumb/c/c7/guy4b6z3uuwsko72hmcbrulojeb87uu.png/720px-JL_daermaodou.png',
+    desc: '你是一只安静的小精灵，平时戴着帽子默默站在角落。你的大耳朵能听到别人听不到的事，你的帽子里可能藏着小秘密。\n\n你不擅长主动社交，但你的朋友都是真心的。你是群里那种"潜水但不缺席"的存在。',
+    chatTips: ['直接 @你 你会愣住', '慢慢聊比快问快答更有效', '不要在人多的群里突然提问', '你会在你熟悉的氛围里突然冒泡', '你喜欢的就会发"我也要！"'],
+  },
+
+  xiaoye: {
+    ...makeSprite('小夜', '🌙', '小夜', '暗', '夜行 / 神秘型', '夜间活跃、神秘、独自',
+                  '普通'),
+    imgUrl: 'https://patchwiki.biligame.com/images/rocom/thumb/9/9c/six06mvlwqmffe55uxtfnkrhjw2xow7.png/720px-JL_xiaoye.png',
+    desc: '你像小夜一样——属于夜晚，越夜越精神。别人睡觉的时候，你的脑子最清醒。\n\n你不喜欢被太多人关注，但你希望有一个人能在深夜陪你说话。你是群里那种"深夜电台"——半夜发消息比白天还活跃。',
+    chatTips: ['晚上 11 点之后找你准没错', '白天 @你 你会失踪', '喜欢看星星、看月亮、看夜空', '你喜欢的歌都是偏安静的类型', '不擅长拒绝，但会拖到忘'],
+  },
+
+  huohua: {
+    ...makeSprite('火花', '🔥', '火花', '火', '萌主 / 物攻型', '热情、活力、直接',
+                  '三主之一'),
+    imgUrl: 'https://patchwiki.biligame.com/images/rocom/thumb/a/ad/eigi6apueibdqnrkiwio8f60ex532zw.png/720px-JL_huohua.png',
+    desc: '你是火花的化身——三主之一，最经典的开局精灵。你的热情就像火焰，靠近你就能被暖到。\n\n你做事直接、敢爱敢恨、行动力强。你不喜欢绕弯子，有话直说是你的风格。',
+    chatTips: ['夸你热情比夸你聪明更有效', '你讨厌冷暴力', '有挑战的事找你准没错', '你生气来得快去得也快', '别在你面前说丧气话'],
+  },
+
+  miaomiao: {
+    ...makeSprite('喵喵', '🐱', '喵喵', '普通', '萌主 / 速攻型', '可爱、独立、慵懒',
+                  '三主之一'),
+    imgUrl: 'https://patchwiki.biligame.com/images/rocom/thumb/e/ee/052k5u3hhjgn9m5hzbv2e7bzuqqg6v1.png/720px-JL_miaomiao.png',
+    desc: '你是喵喵——三主之一，洛克王国最经典的猫系精灵。\n\n你像猫一样独立、慵懒、有自己的节奏。你享受独处、享受阳光、享受午睡。但当你喜欢的人叫你的时候，你会假装不情愿地走过去。',
+    chatTips: ['直接 @你 你会假装没看到', '让你主动找你感兴趣的话题', '发猫的表情包你能接住', '你讨厌被过度打扰', '你的反应慢但都是真心的'],
+  },
+
+  shuilan: {
+    ...makeSprite('水蓝蓝', '💧', '水蓝蓝', '水', '萌主 / 辅助型', '温柔、流动、包容',
+                  '三主之一'),
+    imgUrl: 'https://patchwiki.biligame.com/images/rocom/thumb/0/0f/mhbj8o4tgl6mnald2nbbsr4jn39auir.png/720px-JL_shuilanlan.png',
+    desc: '你是水蓝蓝——三主之一，最温柔的开局精灵。\n\n你像水一样温柔、流动、包容。你能理解别人的情绪、能在群体冲突中起到调和作用。你的力量不在于攻击，而在于让周围的人感到舒服。',
+    chatTips: ['直接说"辛苦了"会温暖你', '你讨厌被强迫表态', '你适合当调解员', '你会在群里默默发表情包', '你心很软但不会说出来'],
+  },
+
+  yaji: {
+    ...makeSprite('鸭吉吉', '🦆', '鸭吉吉', '水', '搞笑 / 平民英雄', '爱玩、爱闹、阳光',
+                  '稀有'),
+    imgUrl: 'https://patchwiki.biligame.com/images/rocom/thumb/7/7e/lo66srvzxol3nxzggni3rksvstovv8s.png/720px-JL_yajiji.png',
+    desc: '你是鸭吉吉——洛克王国最有名的小鸭子，永远乐观、永远在笑。\n\n你像鸭子一样走路摇摇摆摆、说话大大咧咧、做事看起来很笨但总能完成。你是群里那种"气氛担当"，有你的群永远不会冷场。',
+    chatTips: ['跟你开玩笑你能接住', '你讨厌沉重的话题', '约你出去打游戏你会秒答应', '你说话夸张但都是真心的', '你适合当群里的开心果'],
+  },
+
+  emod: {
+    ...makeSprite('恶魔叮', '😈', '恶魔叮', '暗', '调皮 / 速攻型', '古灵精怪、爱恶作剧',
+                  '稀有'),
+    imgUrl: 'https://patchwiki.biligame.com/images/rocom/thumb/7/70/shd69h8ixuqirkh7sp1ujgbysszegl8.png/720px-JL_emoding.png',
+    desc: '你是恶魔叮——小小的恶魔，擅长恶作剧。\n\n你表面坏坏的，其实心地善良。你享受整蛊朋友的快感，但也懂得在朋友真正难过时收起玩笑。你是群里那种"皮一下很开心"的存在。',
+    chatTips: ['不要相信你说的"我不开心"', '你可能突然消失又突然出现', '你的梗都是突然想出来的', '你适合当群里的"反派角色"', '别被你的表面骗了'],
+  },
+
+  shihou: {
+    ...makeSprite('皇家狮鹫', '🦁', '皇家狮鹫', '翼', '领袖 / 守护型', '高贵、保护、威严',
+                  '传说'),
+    imgUrl: 'https://patchwiki.biligame.com/images/rocom/thumb/5/56/rnsik0v8z4uwy43bq9qopw2oe28ndqz.png/720px-JL_huangjiashijiu.png',
+    desc: '你是皇家狮鹫——高山上的王者，洛克王国最威严的存在之一。\n\n你有责任感、有保护欲、有天然的领导力。你不屑于与弱者计较，但你守护的领域绝不容侵犯。你是群里那种"关键时候能撑起来"的存在。',
+    chatTips: ['有事直接说，别绕弯子', '你欣赏有骨气的人', '你的承诺一旦做出就一定会兑现', '你不会主动倾诉但你需要朋友', '你不擅长被示弱所以被信任时很感动'],
+  },
+
+  shenshi: {
+    ...makeSprite('绅士鸡', '🐓', '绅士鸡', '普通', '优雅 / 物攻型', '绅士、可靠、稳重',
+                  '超稀有'),
+    imgUrl: 'https://patchwiki.biligame.com/images/rocom/thumb/7/7b/g34k0n05zw02op7dyckttb05g8txeba.png/720px-JL_shenshiji.png',
+    desc: '你是绅士鸡——永远西装革履、永远彬彬有礼。\n\n你注重形象、注重礼仪、注重承诺。你做事一丝不苟，说话讲究分寸。你是群里那种"靠谱担当"——群里需要冷静分析、需要稳定情绪时，大家都会想到你。',
+    chatTips: ['直接说"请帮个忙"比命令有效', '你欣赏同样讲礼貌的人', '你的抱怨都是温和的', '你不擅长直说自己的情绪', '你需要稳定的环境来发挥最佳状态'],
+  },
+
+  numao: {
+    ...makeSprite('怒目怂猫', '😾', '怒目怂猫', '普通', '反差萌 / 武斗型', '表面凶实际怂、可爱',
+                  '稀有'),
+    imgUrl: 'https://patchwiki.biligame.com/images/rocom/thumb/a/ab/qd5yuts8t0e0uqwo9h0b39pz36ou3i2.png/720px-JL_numusongmao.png',
+    desc: '你是怒目怂猫——名字听起来凶凶的，但其实怂得可爱。\n\n你外表坚强、说话犀利，但内心柔软。你会用"凶"作为保护色，不让人轻易看穿你的真实感受。你是群里那种"刀子嘴豆腐心"的存在。',
+    chatTips: ['不要直接戳穿你的真实想法', '你会用凶来掩饰害羞', '你的抱怨是变相的撒娇', '你不擅长接受直接的赞美', '和你熟了以后会反差极大'],
+  },
+
+  cdie: {
+    ...makeSprite('彩蝶鲨', '🦈', '彩蝶鲨', '水', '自由 / 速攻型', '反差、自由、灵动',
+                  '超稀有'),
+    imgUrl: 'https://patchwiki.biligame.com/images/rocom/thumb/a/a3/88s1q5qt4a8scdw4yf9gqu9hfqr741j.png/720px-JL_caidiesha.png',
+    desc: '你是彩蝶鲨——蝴蝶的翅膀，鲨鱼的身子，反差感拉满。\n\n你像蝴蝶一样轻盈自由，又像鲨鱼一样敏锐直接。你不走寻常路，喜欢打破常规。你是群里那种"出场就是焦点"的存在。',
+    chatTips: ['直接说"我有个想法"你会马上接', '你讨厌无聊的话题', '你欣赏有创意的人', '你说话跳跃性强，跟得上你的人会喜欢', '你的反差感是最大魅力'],
+  },
+
+  qiqi: {
+    ...makeSprite('棋绮后（白子）', '♟️', '棋绮后（白子）', '光', '智谋 / 战略型', '智谋、冷静、掌控',
+                  '传说'),
+    imgUrl: 'https://patchwiki.biligame.com/images/rocom/thumb/e/e2/h8yzpqtg2fqxeb6xihdizbt51ebnzkc.png/720px-JL_qiqihou.png',
+    desc: '你是棋绮后——棋盘上的白子，掌控全局的智者。\n\n你擅长分析、擅长计划、擅长看穿别人的意图。你不轻易出手，但一旦出手就是必杀。你是群里那种"军师"角色——遇事不决，问你。',
+    chatTips: ['直接说"我遇到了 X 问题"你会帮分析', '你欣赏有逻辑的人', '你不擅长被催', '你需要时间思考，别打断', '你的沉默往往有深意'],
+  },
+
+  xingguang: {
+    ...makeSprite('星光狮', '🦄', '星光狮', '光', '神秘 / 力量型', '星光、神秘、力量',
+                  '传说'),
+    imgUrl: 'https://patchwiki.biligame.com/images/rocom/thumb/9/92/rk8zid4pmr7hhvbdnmfcrhgy7wq9stg.png/720px-JL_xingguangsh.png',
+    desc: '你是星光狮——被星光能量附身的狮子，神秘而强大。\n\n你像狮子一样有王者之气，又像星光一样柔和、深远。你不在聚光灯下，但你的影响力无处不在。你是群里那种"低调的大佬"。',
+    chatTips: ['直接表达需求你会帮忙', '你欣赏独立的人', '你不主动社交但你会回应', '你的建议都很中肯', '你不擅长接受依赖'],
+  },
+
+  longxi: {  // 最最隐藏款：龙息帕尔
+    ...makeSprite('龙息帕尔', '🐉', '龙息帕尔', '龙', '传说 / 龙族 / 至高', '传说级、龙息、独一无二',
+                  '龙族唯一'),
+    imgUrl: 'https://patchwiki.biligame.com/images/rocom/thumb/e/eb/999r2wd7cpiay4ex9q8okam4ut8s3x0.png/720px-JL_longxipaer.png',
+    desc: '你是龙息帕尔——洛克王国世界中<b>最稀有的存在</b>。\n\n你集合了所有精灵的特征：神秘如小夜，力量如皇家狮鹫，智慧如棋绮后，温柔如水蓝蓝，热情如火花，沉稳如绅士鸡。你不是其中之一，你是所有可能性的集合。\n\n你极少出现——只有那些 4 维都极强 + 极极端组合 + 极主导或极接受的人，才能测出龙息帕尔。\n\n<b>如果你测出龙息帕尔——你不是一个简单的性格，你是所有可能性的总和。</b>',
+    chatTips: ['没有话术适配你', '你已经超越了"分类"这个概念', '你在群里就是传说本身', '被人测出来时，你会想笑', '这一栏只是形式，因为你不需要任何建议'],
+    ultraHidden: true,  // 比迪莫更深的隐藏
+  },
+};
+
+// 性格 ↔ 精灵 映射（用 MBTI 4 维）
+function pickSprite(dims, pcts, role_score) {
+  const e = dims.ei >= 0 ? 'E' : 'I';
+  const s = dims.sn >= 0 ? 'S' : 'N';
+  const t = dims.tf >= 0 ? 'T' : 'F';
+  const j = dims.jp >= 0 ? 'J' : 'P';
+  const minPct = Math.min(pcts.ei, pcts.sn, pcts.tf, pcts.jp);
+
+  // 最最隐藏款：龙息帕尔（触发条件比迪莫还严苛）
+  // 4 维都 > 80% + 角色倾向绝对值 > 0.85 + 极端 INTJ/INTP/INFJ/INFP 组合
+  if (minPct > 80 && Math.abs(role_score) > 0.85) {
+    if ((e === 'I' && s === 'N' && t === 'T' && j === 'J') ||
+        (e === 'I' && s === 'N' && t === 'T' && j === 'P') ||
+        (e === 'I' && s === 'N' && t === 'F' && j === 'J') ||
+        (e === 'I' && s === 'N' && t === 'F' && j === 'P')) {
+      return 'longxi';
+    }
+  }
+
+  // 隐藏款：迪莫，触发条件 - 4 维都极强 + 极端组合
+  if (minPct > 65 && ((e === 'I' && s === 'N' && t === 'T' && j === 'J') ||
+                      (e === 'I' && s === 'N' && t === 'T' && j === 'P'))) {
+    return 'demo';
+  }
+
+  // 主动/外向/逻辑 → 火花、皇家狮鹫、绅士鸡、棋绮后
+  if (e === 'E' && t === 'T' && j === 'J') return 'shihou';  // 皇家狮鹫
+  if (e === 'E' && t === 'T' && j === 'P') return 'huohua';  // 火花
+  if (e === 'E' && t === 'F' && j === 'J') return 'shenshi'; // 绅士鸡
+  if (e === 'I' && t === 'T' && j === 'J') return 'qiqi';   // 棋绮后
+  if (e === 'I' && t === 'F' && j === 'J') return 'ermao';  // 大耳帽兜
+  if (e === 'I' && t === 'F' && j === 'P') return 'shuilan'; // 水蓝蓝
+  if (e === 'E' && t === 'F' && j === 'P') return 'yaji';   // 鸭吉吉
+  if (e === 'I' && t === 'T' && j === 'P') return 'xingguang'; // 星光狮
+  if (e === 'E' && t === 'F') return 'numao';               // 怒目怂猫
+  if (e === 'I' && t === 'F') return 'xiaoye';              // 小夜
+  if (e === 'E' && t === 'T') return 'emod';                // 恶魔叮
+  if (e === 'I' && t === 'T') return 'cdie';                // 彩蝶鲨
+  if (s === 'N') return 'xingguang';
+  if (s === 'S') return 'miaomiao';                         // 喵喵 fallback
+  return 'miaomiao';
+}
+
+// 血脉判定
+function pickBloodline(role_score) {
+  if (role_score > 0.6) return { type: '奇异', desc: '最强血脉，全服罕见。你的强势让周围的精灵都被你感染。', emoji: '🔴', tier: 3 };
+  if (role_score > 0.3) return { type: '污染', desc: '稀有血脉，黑暗而强大。'  , emoji: '🟠', tier: 2 };
+  if (role_score < -0.6) return { type: '奇异', desc: '最强血脉，全服罕见。你柔中带刚，独一无二。', emoji: '🔴', tier: 3 };
+  if (role_score < -0.3) return { type: '污染', desc: '稀有血脉，温柔中藏着不可测的深度。', emoji: '🟠', tier: 2 };
+  if (role_score > 0.1) return { type: '混血', desc: '你的血脉与自身属性略有不同，自带特殊能力。', emoji: '🟡', tier: 1 };
+  if (role_score < -0.1) return { type: '混血', desc: '你的血脉与自身属性略有不同，潜力待开发。', emoji: '🟡', tier: 1 };
+  return { type: '普通', desc: '纯净血脉，与自身属性完全一致，稳如磐石。', emoji: '🟢', tier: 0 };
+}
+
+// 稀有度判定
+function pickRarity(sprite, bloodline, role_score) {
+  let rarity = sprite.baseRarity;
+  // 血脉加成
+  if (bloodline.type === '奇异') rarity = '传说·异脉';
+  else if (bloodline.type === '污染') rarity = '超稀有·异脉';
+  else if (bloodline.type === '混血') rarity = rarity + '·混血';
+  // 异色 / 炫彩（极小概率，由 role 分数绝对值 > 0.7 触发）
+  const abs = Math.abs(role_score);
+  if (abs > 0.7) rarity = rarity + '·炫彩';
+  else if (abs > 0.5) rarity = rarity + '·异色';
+  return rarity;
+}
+
+// 最佳阵容搭配（同款性格 / 互补性格）
+function pickBestMate(dims) {
+  const e = dims.ei >= 0 ? 'E' : 'I';
+  const t = dims.tf >= 0 ? 'T' : 'F';
+  // 互补：外向 + 内向 配对
+  if (e === 'E' && t === 'T') return 'xiaoye';
+  if (e === 'E' && t === 'F') return 'xingguang';
+  if (e === 'I' && t === 'T') return 'yaji';
+  if (e === 'I' && t === 'F') return 'emod';
+  return 'miaomiao';
+}
+</script>
+<script>
+// ========== 主程序 ==========
+const state = { step: 0, answers: new Array(75).fill(null) };
+
+function begin() {
+  state.step = 0;
+  state.answers = new Array(75).fill(null);
+  renderQuestion();
+}
+
+function renderIntro() {
+  document.getElementById('app').innerHTML = `
+    <div class="card">
+      <h2>🐾 欢迎来到洛克王国世界</h2>
+      <p>通过 <b>75 道选择题</b>，我们会从 6 个维度画出你的"精灵种族值"，再从 <b>14 个经典精灵</b> 中找出最像你的那一只。</p>
+      <p>测完你会得到：</p>
+      <ul>
+        <li>🐾 <b>你的洛克王国精灵</b>（名字 + 真实图片，引用自 B站 Wiki）</li>
+        <li>🎨 <b>你的属性与定位</b>（草/水/火/翼/光/暗/...）</li>
+        <li>📊 <b>6 项种族值</b>（生命/物攻/魔攻/物防/魔防/速度）</li>
+        <li>🩸 <b>血脉 + 稀有度</b>（普通/混血/污染/奇异 · 异色/炫彩）</li>
+        <li>💬 <b>群聊话术 / 经典台词</b>（怎么跟你说话最有效）</li>
+        <li>🐾 <b>最佳组队精灵</b>（最匹配的另一位）</li>
+      </ul>
+      <p>预计 10-15 分钟。所有数据 <b>只在你的浏览器里</b>，<b>不会上传任何地方</b>。</p>
+      <p class="disclaimer">⚠️ <b>免责声明</b>：本测试仅供娱乐和群友间的玩笑，<b>不能</b>作为任何专业心理评估。本项目是<b>非商业</b>粉丝作品，所有精灵图片来源于 B站 Wiki（<b>CC BY-NC-SA 4.0</b>），版权属于腾讯游戏《洛克王国世界》原作方。</p>
+      <div style="text-align:center;margin-top:24px">
+        <button class="btn" onclick="begin()">我了解，开始</button>
+      </div>
+    </div>`;
+}
+
+function renderQuestion() {
+  const q = QUESTIONS[state.step];
+  const pct = (state.step / 75) * 100;
+  const a = state.answers[state.step];
+  document.getElementById('app').innerHTML = `
+    <div class="question-card card">
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <div class="q-num">第 ${state.step + 1} / 75 题</div>
+      <div class="q-text">${q.a}</div>
+      <div style="color:var(--muted);text-align:center;margin:-14px 0 18px">——或者——</div>
+      <div class="q-text">${q.b}</div>
+      <div class="q-options">
+        <div class="q-option ${a === 'a' ? 'selected-a' : ''}" onclick="answer('a')">
+          <div class="q-label">A</div>${q.a}
+        </div>
+        <div class="q-option ${a === 'b' ? 'selected-b' : ''}" onclick="answer('b')">
+          <div class="q-label">B</div>${q.b}
+        </div>
+      </div>
+      <div class="q-nav">
+        <button class="btn btn-secondary" onclick="prev()" ${state.step === 0 ? 'disabled' : ''}>← 上一题</button>
+        <button class="btn" onclick="next()" ${a == null ? 'disabled' : ''}>${state.step === 74 ? '看结果' : '下一题 →'}</button>
+      </div>
+    </div>`;
+}
+
+function answer(val) {
+  state.answers[state.step] = val;
+  renderQuestion();
+  // 自动跳到下一题（300ms）
+  if (state.step < 74) {
+    setTimeout(() => { state.step++; renderQuestion(); }, 300);
+  }
+}
+function prev() { if (state.step > 0) { state.step--; renderQuestion(); } }
+function next() {
+  if (state.answers[state.step] == null) return;
+  if (state.step < 74) { state.step++; renderQuestion(); }
+  else { renderResult(); }
+}
+
+function score() {
+  const dims = { ei: 0, sn: 0, tf: 0, jp: 0 };
+  QUESTIONS.forEach((q, i) => {
+    if (q.sec !== 'mbti') return;
+    const a = state.answers[i];
+    if (a == null) return;
+    const sign = a === 'a' ? q.pole : -q.pole;
+    dims[q.dim] += sign;
+  });
+  const mbti_pcts = {
+    ei: Math.round((Math.abs(dims.ei) / 15) * 100),
+    sn: Math.round((Math.abs(dims.sn) / 15) * 100),
+    tf: Math.round((Math.abs(dims.tf) / 15) * 100),
+    jp: Math.round((Math.abs(dims.jp) / 15) * 100),
+  };
+  // 角色倾向
+  let role_total = 0, role_n = 0;
+  QUESTIONS.forEach((q, i) => {
+    if (q.sec !== 'role') return;
+    const a = state.answers[i];
+    if (a == null) return;
+    const sign = a === 'a' ? q.pole : -q.pole;
+    role_total += sign;
+    role_n++;
+  });
+  const role_score = role_n > 0 ? role_total / role_n : 0;
+
+  // 6 项种族值（基于 MBTI 4 维）
+  function statFromDims(formula) {
+    let s = 50;
+    s += (dims.ei / 15) * (formula.ei || 0) * 50;
+    s += (dims.sn / 15) * (formula.sn || 0) * 50;
+    s += (dims.tf / 15) * (formula.tf || 0) * 50;
+    s += (dims.jp / 15) * (formula.jp || 0) * 50;
+    return Math.max(0, Math.min(100, Math.round(s)));
+  }
+  const stats = {
+    hp:    { name: '❤️ 生命',   val: statFromDims({ ei: 0, sn: 0.3, tf: 0, jp: 0.5 }), desc: '续航 / 持久' },
+    atk:   { name: '⚔️ 物攻',  val: statFromDims({ ei: 0.3, sn: 0, tf: 0.4, jp: -0.2 }), desc: '物理输出' },
+    spatk: { name: '✨ 魔攻',  val: statFromDims({ ei: -0.2, sn: 0.4, tf: -0.3, jp: 0 }), desc: '魔法输出' },
+    def:   { name: '🛡️ 物防',  val: statFromDims({ ei: 0, sn: 0.3, tf: 0.2, jp: 0.3 }), desc: '物理防御' },
+    spdef: { name: '🔮 魔防',  val: statFromDims({ ei: 0, sn: 0, tf: -0.4, jp: 0.3 }), desc: '魔法防御' },
+    spd:   { name: '💨 速度',  val: statFromDims({ ei: 0.3, sn: 0.3, tf: 0, jp: -0.5 }), desc: '出手速度' },
+  };
+  return { dims, mbti_pcts, role_score, stats };
+}
+
+function renderResult() {
+  const s = score();
+  const spriteKey = pickSprite(s.dims, s.mbti_pcts, s.role_score);
+  const sprite = SPRITES[spriteKey];
+  const bloodline = pickBloodline(s.role_score);
+  const rarity = pickRarity(sprite, bloodline, s.role_score);
+  const mateKey = pickBestMate(s.dims);
+  const mate = SPRITES[mateKey];
+  const isHidden = sprite.hidden || sprite.ultraHidden;
+
+  // 种族值排序
+  const statList = Object.values(s.stats).sort((a, b) => b.val - a.val);
+  const top1 = statList[0];
+  const bot1 = statList[statList.length - 1];
+
+  // 主卡精灵图：img 标签 + emoji fallback
+  // 当 imgUrl 为空或加载失败时显示 emoji
+  const spriteBlock = sprite.imgUrl
+    ? `<div class="sprite-img-wrap">
+         <img class="sprite-img" src="${sprite.imgUrl}" alt="${sprite.name}"
+              onerror="this.parentElement.innerHTML='<div class=&quot;sprite-emoji&quot;>${sprite.emoji}</div>'">
+       </div>`
+    : `<div class="sprite-emoji">${sprite.emoji}</div>`;
+
+  document.getElementById('app').innerHTML = `
+    <div class="share-card ${isHidden ? 'hidden-card' : ''}">
+      <div style="font-size:14px;opacity:0.95">你的洛克王国精灵是</div>
+      ${spriteBlock}
+      <div class="big-type">${sprite.name}</div>
+      <div style="font-size:14px;opacity:0.95;margin-bottom:4px">${sprite.type} · ${sprite.attr}属性</div>
+      <div class="kinsey">${rarity} · ${bloodline.type}血脉</div>
+    </div>
+    <div class="card result-section">
+      <h3>📜 ${sprite.name}的精灵图鉴</h3>
+      <p style="white-space:pre-line">${sprite.desc}</p>
+    </div>
+    <div class="card result-section">
+      <h3>💬 群聊话术 / 经典台词</h3>
+      <ul style="padding-left:0;list-style:none">
+        ${sprite.chatTips.map(t => `<li style="padding:8px 0;border-bottom:1px dashed var(--border)">· ${t}</li>`).join('')}
+      </ul>
+    </div>
+    <div class="card result-section" style="background:linear-gradient(135deg,rgba(124,58,237,0.04),rgba(236,72,153,0.04));border:1.5px solid rgba(124,58,237,0.2)">
+      <h3>📊 你的 6 项种族值</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px">基于 60 道性格题计算 · 满分 100 · 来自洛克王国世界的种族值系统</p>
+      <div class="stats-grid">
+        ${statList.map(stat => {
+          const color = stat.val >= 70 ? 'var(--good)' : stat.val <= 30 ? 'var(--muted)' : 'var(--accent)';
+          return `<div class="stat-row">
+            <div class="stat-label">${stat.name}</div>
+            <div class="stat-bar">
+              <div class="stat-fill" style="width:${stat.val}%;background:linear-gradient(90deg,${color},${color}cc)"></div>
+            </div>
+            <div class="stat-val" style="color:${color}">${stat.val}</div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div style="margin-top:14px;padding:10px 14px;background:rgba(124,58,237,0.08);border-radius:8px;font-size:13px">
+        🏆 <b>最高：</b>${top1.name} (${top1.val}) · ${top1.desc}<br>
+        🌑 <b>最低：</b>${bot1.name} (${bot1.val}) · ${bot1.desc}
+      </div>
+    </div>
+    <div class="card result-section">
+      <h3>🩸 你的血脉 & 稀有度</h3>
+      <div class="blood-bar">
+        <div class="blood-cell active">
+          <div class="blood-emoji">${bloodline.emoji}</div>
+          <b>${bloodline.type}血脉</b>
+          <span>${bloodline.desc}</span>
+        </div>
+        <div class="blood-cell active">
+          <div class="blood-emoji">⭐</div>
+          <b>${rarity}</b>
+          <span>基于精灵基础稀有度 + 血脉 + 强度综合判定</span>
+        </div>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin-top:10px">📌 血脉说明：<b>普通</b>（与自身属性一致）→ <b>混血</b>（属性不同）→ <b>污染</b>（稀有）→ <b>奇异</b>（最稀有）。异色/炫彩在血脉强度高时解锁。</p>
+    </div>
+    <div class="card result-section">
+      <h3>🐾 你的组队精灵</h3>
+      <div style="text-align:center;padding:12px 0">
+        <div style="font-size:64px">${mate.emoji}</div>
+        <div style="font-size:18px;font-weight:700;margin:6px 0">${mate.name}</div>
+        <div style="color:var(--muted);font-size:13px">${mate.type} · ${mate.attr}属性</div>
+      </div>
+      <p>${mate.desc.split('\n')[0]}</p>
+      <p style="margin-top:10px;color:var(--muted);font-size:13px">你俩是互补型 —— 一攻一守 / 一动一静，组队能打出不错的配合。</p>
+    </div>
+    <div class="card result-section">
+      <h3>📤 分享 / 保存</h3>
+      <p>把结果分享给群友，或导出留档。</p>
+      <div class="action-row">
+        <button class="btn" onclick="downloadJSON()">导出 JSON</button>
+        <button class="btn btn-secondary" onclick="downloadText()">导出文本</button>
+        <button class="btn btn-secondary" onclick="copyShare()">复制分享文字</button>
+        <button class="btn btn-secondary" onclick="restart()">重新测试</button>
+      </div>
+      <div id="copy-msg" class="error-msg" style="color:var(--good);display:none;margin-top:10px">已复制到剪贴板！</div>
+    </div>
+    <div class="card">
+      <p class="disclaimer">
+        <b>⚠️ 重要提醒</b><br>
+        · 本测试仅供娱乐和群友间的玩笑，<b>不能替代专业心理评估</b><br>
+        · 精灵图鉴是简化标签，真实的你比任何一只精灵都更丰富<br>
+        · 结果只反映你"那一刻的状态"，不是永久标签<br>
+        · 所有数据<b>只存在你的浏览器</b>，关页面就消失<br>
+        · 图片来源于 <a href="https://wiki.biligame.com/rocom/" target="_blank" style="color:var(--accent)">B站洛克王国 Wiki</a>，遵循 <b>CC BY-NC-SA 4.0</b> 协议<br>
+        · 洛克王国世界 © 腾讯游戏，本项目 <b>非商业</b>
+      </p>
+    </div>`;
+}
+
+function restart() { state.step = 0; state.answers = new Array(75).fill(null); renderIntro(); }
+
+function downloadJSON() {
+  const s = score();
+  const spriteKey = pickSprite(s.dims, s.mbti_pcts, s.role_score);
+  const sprite = SPRITES[spriteKey];
+  const bloodline = pickBloodline(s.role_score);
+  const rarity = pickRarity(sprite, bloodline, s.role_score);
+  const data = {
+    timestamp: new Date().toISOString(),
+    sprite: { key: spriteKey, name: sprite.name, emoji: sprite.emoji, attr: sprite.attr, type: sprite.type, hidden: !!sprite.hidden, ultraHidden: !!sprite.ultraHidden },
+    stats: s.stats,
+    bloodline: bloodline.type,
+    rarity: rarity,
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `my-roco-pet-${spriteKey}-${Date.now()}.json`;
+  a.click();
+}
+
+function downloadText() {
+  const s = score();
+  const spriteKey = pickSprite(s.dims, s.mbti_pcts, s.role_score);
+  const sprite = SPRITES[spriteKey];
+  const bloodline = pickBloodline(s.role_score);
+  const rarity = pickRarity(sprite, bloodline, s.role_score);
+  const txt = `🐾 测试你是什么洛克王国精灵
+================
+时间: ${new Date().toLocaleString('zh-CN')}
+
+你的洛克王国精灵: ${sprite.emoji} ${sprite.name}
+属性: ${sprite.attr}属性
+定位: ${sprite.type}
+稀有度: ${rarity}
+血脉: ${bloodline.type} (${bloodline.desc})
+
+你的画像:
+${sprite.desc}
+
+群聊话术:
+${sprite.chatTips.map(l => '  · ' + l).join('\n')}
+
+📊 6 项种族值:
+${Object.values(s.stats).map(st => `  ${st.name}: ${st.val}`).join('\n')}
+
+—— 本测试仅供娱乐，不代表任何专业评估 ——
+图片来源: B站洛克王国 Wiki (CC BY-NC-SA 4.0)
+`;
+  const blob = new Blob([txt], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `my-roco-pet-${spriteKey}-${Date.now()}.txt`;
+  a.click();
+}
+
+function copyShare() {
+  const s = score();
+  const spriteKey = pickSprite(s.dims, s.mbti_pcts, s.role_score);
+  const sprite = SPRITES[spriteKey];
+  const bloodline = pickBloodline(s.role_score);
+  const rarity = pickRarity(sprite, bloodline, s.role_score);
+  const txt = `🐾 我刚测了个"测试你是什么洛克王国精灵"——
+
+我的精灵是 ${sprite.emoji} ${sprite.name}（${sprite.attr}属性）
+定位: ${sprite.type}
+稀有度: ${rarity}
+血脉: ${bloodline.type}
+
+${sprite.desc.split('\n')[0]}
+
+@全体群友 都来测测 🐾
+`;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(txt).then(() => {
+      const msg = document.getElementById('copy-msg');
+      if (msg) { msg.style.display = 'block'; setTimeout(() => msg.style.display = 'none', 3000); }
+    });
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = txt; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    const msg = document.getElementById('copy-msg');
+    if (msg) { msg.style.display = 'block'; setTimeout(() => msg.style.display = 'none', 3000); }
+  }
+}
+
+renderIntro();
+</script>
+</body>
+</html>
