@@ -82,13 +82,31 @@ header .subtitle { color: var(--muted); font-size: 14px; margin: 0; }
 .share-card .sprite-emoji { font-size: 120px; line-height: 1; margin: 8px 0; }
 
 /* 6 项种族值 */
-.stats-grid { display: flex; flex-direction: column; gap: 10px; margin: 12px 0; }
+.stats-grid { display: flex; flex-direction: column; gap: 6px; margin: 12px 0; }
 .stat-row { display: grid; grid-template-columns: 80px 1fr 40px; align-items: center; gap: 10px; }
 .stat-label { font-size: 13px; font-weight: 600; white-space: nowrap; }
 .stat-bar { height: 16px; background: var(--border); border-radius: 8px; overflow: hidden; position: relative; }
-.stat-fill { height: 100%; border-radius: 8px; transition: width 0.6s ease; min-width: 2px;
-             display: flex; align-items: center; justify-content: flex-end; padding-right: 6px; }
+.stat-fill {
+  height: 100%; min-width: 4px; display: block; border-radius: 8px;
+  transition: width 0.6s ease;
+}
 .stat-val { font-size: 14px; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+.stat-explain {
+  font-size: 12px; color: var(--muted); line-height: 1.6;
+  padding: 2px 0 10px 90px; margin: 0;
+}
+
+/* 组队精灵 */
+.mate-block { text-align: center; padding: 16px 0 8px; }
+.mate-img-wrap { display: flex; justify-content: center; margin-bottom: 8px; }
+.mate-img {
+  width: 120px; height: 120px; object-fit: contain; background: var(--bg);
+  border-radius: 50%; padding: 8px; border: 2px solid var(--border);
+  display: block;
+}
+.mate-emoji { font-size: 80px; line-height: 1; width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; background: var(--bg); border-radius: 50%; border: 2px solid var(--border); }
+.mate-name { font-size: 20px; font-weight: 700; margin: 6px 0 2px; }
+.mate-attr { color: var(--muted); font-size: 13px; }
 
 /* 血脉 + 稀有度 */
 .blood-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
@@ -361,6 +379,16 @@ const SPRITES = {
   },
 };
 
+// 6 项种族值的通俗解释（每项 0-100 不同分档）
+const STAT_EXPLAIN = {
+  hp: '❤️ 生命决定你的"续航"。高 = 你扛得住压力，能长时间做一件事不累；低 = 你爆发力强但容易累。',
+  atk: '⚔️ 物攻决定你的"直接冲击"。高 = 你行动力强、敢说敢做；低 = 你更擅长柔性影响而不是硬刚。',
+  spatk: '✨ 魔攻决定你的"内在深度"。高 = 你有想法、有创造力、有精神世界；低 = 你更务实不靠灵感。',
+  def: '🛡️ 物防决定你的"计划性"。高 = 你做事有章法、不容易被突发打乱；低 = 你更灵活但容易被打乱节奏。',
+  spdef: '🔮 魔防决定你的"情绪稳定性"。高 = 你不容易被他人情绪影响，内心稳；低 = 你共情力强但容易被带节奏。',
+  spd: '💨 速度决定你的"反应力"。高 = 你反应快、决策快、讨厌拖；低 = 你深思熟虑但出手慢。',
+};
+
 // 性格 ↔ 精灵 映射（用 MBTI 4 维）
 function pickSprite(dims, pcts, role_score) {
   const e = dims.ei >= 0 ? 'E' : 'I';
@@ -440,6 +468,47 @@ function pickBestMate(dims) {
   if (e === 'I' && t === 'F') return 'emod';
   return 'miaomiao';
 }
+
+// 组队方向（基于你+队友的属性、定位、特质）
+function pickMateStrategy(you, mate) {
+  // 你 + 队友的属性克制关系
+  const advantageMap = {
+    '火': { beats: '草', weak: '水' },
+    '草': { beats: '水', weak: '火' },
+    '水': { beats: '火', weak: '草' },
+    '光': { beats: '暗', weak: '无' },
+    '暗': { beats: '光', weak: '无' },
+    '翼': { beats: '草', weak: '电' },
+    '武': { beats: '普通', weak: '无' },
+    '魔': { beats: '无', weak: '光' },
+    '龙': { beats: '无', weak: '无' },
+    '普通': { beats: '无', weak: '武' },
+  };
+  const yourAttr = advantageMap[you.attr] || { beats: '无', weak: '无' };
+  const mateAttr = advantageMap[mate.attr] || { beats: '无', weak: '无' };
+  let relation = '';
+  if (yourAttr.beats === mate.attr) relation = `你的 ${you.attr}属性 克制 ta 的 ${mate.attr}属性（你打 ta 痛）`;
+  else if (yourAttr.weak === mate.attr) relation = `ta 的 ${mate.attr}属性 克制你的 ${you.attr}属性（注意协同抗打击）`;
+  else relation = `属性间互不克制，可灵活搭配`;
+  // 性格互补（用 if/else 更安全）
+  function classifyType(t) {
+    if (t.includes('领袖') || t.includes('保护')) return '进攻型';
+    if (t.includes('辅助') || t.includes('治愈')) return '辅助型';
+    if (t.includes('速攻') || t.includes('行动')) return '速攻型';
+    return '平衡型';
+  }
+  const youType = classifyType(you.type);
+  const mateType = classifyType(mate.type);
+  let strategy = '';
+  if (youType === '进攻型' && mateType === '辅助型') strategy = '你负责输出，ta 负责加血/减伤，经典输出流';
+  else if (youType === '辅助型' && mateType === '进攻型') strategy = 'ta 负责输出，你负责奶/控场，经典辅助流';
+  else if (youType === '速攻型' && mateType === '辅助型') strategy = 'ta 给你加速/减伤，你闪电战，速战速决';
+  else if (youType === '速攻型' && mateType === '速攻型') strategy = '双速攻先手，秒掉一个就赢，但续航差';
+  else if (youType === '进攻型' && mateType === '进攻型') strategy = '双输出暴力队，速战速决但缺乏续航';
+  else if (youType === '辅助型' && mateType === '辅助型') strategy = '双辅助拉锯战，靠消耗取胜';
+  else strategy = '均衡搭配，攻守兼备';
+  return `${relation}。${strategy}。`;
+}
 </script>
 <script>
 // ========== 主程序 ==========
@@ -455,7 +524,7 @@ function renderIntro() {
   document.getElementById('app').innerHTML = `
     <div class="card">
       <h2>🐾 欢迎来到洛克王国世界</h2>
-      <p>通过 <b>75 道选择题</b>，我们会从 6 个维度画出你的"精灵种族值"，再从 <b>14 个经典精灵</b> 中找出最像你的那一只。</p>
+      <p>通过 <b>75 道选择题</b>，我们会从 6 个维度画出你的"精灵种族值"，从 <b>15 个经典精灵</b> 中找出最像你的那一只（外加 1 个隐藏款迪莫 + 1 个最最隐藏款龙息帕尔）。</p>
       <p>测完你会得到：</p>
       <ul>
         <li>🐾 <b>你的洛克王国精灵</b>（名字 + 真实图片，引用自 B站 Wiki）</li>
@@ -572,7 +641,7 @@ function renderResult() {
   const isHidden = sprite.hidden || sprite.ultraHidden;
 
   // 种族值排序
-  const statList = Object.values(s.stats).sort((a, b) => b.val - a.val);
+  const statList = Object.entries(s.stats).map(([key, stat]) => ({ ...stat, key })).sort((a, b) => b.val - a.val);
   const top1 = statList[0];
   const bot1 = statList[statList.length - 1];
 
@@ -615,7 +684,8 @@ function renderResult() {
               <div class="stat-fill" style="width:${stat.val}%;background:linear-gradient(90deg,${color},${color}cc)"></div>
             </div>
             <div class="stat-val" style="color:${color}">${stat.val}</div>
-          </div>`;
+          </div>
+          <div class="stat-explain">${STAT_EXPLAIN[stat.key] || ''}</div>`;
         }).join('')}
       </div>
       <div style="margin-top:14px;padding:10px 14px;background:rgba(124,58,237,0.08);border-radius:8px;font-size:13px">
@@ -641,13 +711,17 @@ function renderResult() {
     </div>
     <div class="card result-section">
       <h3>🐾 你的组队精灵</h3>
-      <div style="text-align:center;padding:12px 0">
-        <div style="font-size:64px">${mate.emoji}</div>
-        <div style="font-size:18px;font-weight:700;margin:6px 0">${mate.name}</div>
-        <div style="color:var(--muted);font-size:13px">${mate.type} · ${mate.attr}属性</div>
+      <div class="mate-block">
+        <div class="mate-img-wrap">
+          <img class="mate-img" src="${mate.imgUrl || ''}" alt="${mate.name}"
+               onerror="this.parentElement.innerHTML='<div class=&quot;mate-emoji&quot;>${mate.emoji}</div>'">
+        </div>
+        <div class="mate-name">${mate.name}</div>
+        <div class="mate-attr">${mate.attr}属性 · ${mate.type}</div>
       </div>
-      <p>${mate.desc.split('\n')[0]}</p>
-      <p style="margin-top:10px;color:var(--muted);font-size:13px">你俩是互补型 —— 一攻一守 / 一动一静，组队能打出不错的配合。</p>
+      <p style="margin-top:14px"><b>${mate.name}</b> 是一只<strong>${mate.attr}属性</strong>的精灵，性格特质是 <b>${mate.trait}</b>。</p>
+      <p style="margin-top:8px;color:var(--muted);font-size:13px">${mate.desc.split('\n')[0]}</p>
+      <p style="margin-top:10px">🛡️ <b>组队方向：</b>${pickMateStrategy(sprite, mate)}</p>
     </div>
     <div class="card result-section">
       <h3>📤 分享 / 保存</h3>
