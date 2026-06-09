@@ -531,7 +531,7 @@ function renderIntro() {
         <li>🎨 <b>你的属性与定位</b>（草/水/火/翼/光/暗/...）</li>
         <li>📊 <b>6 项种族值</b>（生命/物攻/魔攻/物防/魔防/速度）</li>
         <li>🩸 <b>血脉 + 稀有度</b>（普通/混血/污染/奇异 · 异色/炫彩）</li>
-        <li>💬 <b>群聊话术 / 经典台词</b>（怎么跟你说话最有效）</li>
+        <li>📜 <b>训练师指南</b>（培养路线 / 出战风格 / 配队建议）</li>
         <li>🐾 <b>最佳组队精灵</b>（最匹配的另一位）</li>
       </ul>
       <p>预计 10-15 分钟。所有数据 <b>只在你的浏览器里</b>，<b>不会上传任何地方</b>。</p>
@@ -667,9 +667,10 @@ function renderResult() {
       <p style="white-space:pre-line">${sprite.desc}</p>
     </div>
     <div class="card result-section">
-      <h3>💬 群聊话术 / 经典台词</h3>
+      <h3>📜 训练师指南</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:8px">根据你的精灵定位、最高种族值、血脉和稀有度生成。</p>
       <ul style="padding-left:0;list-style:none">
-        ${sprite.chatTips.map(t => `<li style="padding:8px 0;border-bottom:1px dashed var(--border)">· ${t}</li>`).join('')}
+        ${renderTrainerGuideList(sprite, s.stats, bloodline, rarity)}
       </ul>
     </div>
     <div class="card result-section" style="background:linear-gradient(135deg,rgba(124,58,237,0.04),rgba(236,72,153,0.04));border:1.5px solid rgba(124,58,237,0.2)">
@@ -749,6 +750,33 @@ function renderResult() {
 
 function restart() { state.step = 0; state.answers = new Array(75).fill(null); renderIntro(); }
 
+// 训练师指南：把原来的聊天提示转成洛克王国测试语境
+function renderTrainerGuide(sprite, stats, bloodline, rarity) {
+  const statList = Object.entries(stats).map(([key, stat]) => ({ key, ...stat })).sort((a, b) => b.val - a.val);
+  const top = statList[0];
+  const low = statList[statList.length - 1];
+  const lines = [
+    `你的核心打法偏向 <b>${sprite.type}</b>，最适合走 <b>${top.name}</b> 优先的培养路线。`,
+    `${top.name} 高，说明你这只精灵在队伍里最擅长发挥「${top.desc}」这类作用。`,
+    `${low.name} 偏低，代表你不适合硬吃这类压力，最好让组队精灵帮你补位。`,
+    `${bloodline.type}血脉 + ${rarity}，说明你的稀有感主要来自「${bloodline.desc}」。`,
+    `实战建议：别把自己当万能精灵用，围绕 ${sprite.attr}属性 和 ${top.name} 优势配队，效果最好。`,
+  ];
+  return lines;
+}
+
+function renderTrainerGuideList(sprite, stats, bloodline, rarity) {
+  return renderTrainerGuide(sprite, stats, bloodline, rarity)
+    .map(t => `<li style="padding:8px 0;border-bottom:1px dashed var(--border)">· ${t}</li>`)
+    .join('');
+}
+
+function renderTrainerGuideText(sprite, stats, bloodline, rarity) {
+  return renderTrainerGuide(sprite, stats, bloodline, rarity)
+    .map(l => '  · ' + l.replace(/<[^>]*>/g, ''))
+    .join('\n');
+}
+
 function downloadJSON() {
   const s = score();
   const spriteKey = pickSprite(s.dims, s.mbti_pcts, s.role_score);
@@ -788,8 +816,8 @@ function downloadText() {
 你的画像:
 ${sprite.desc}
 
-群聊话术:
-${sprite.chatTips.map(l => '  · ' + l).join('\n')}
+训练师指南:
+${renderTrainerGuideText(sprite, s.stats, bloodline, rarity)}
 
 📊 6 项种族值:
 ${Object.values(s.stats).map(st => `  ${st.name}: ${st.val}`).join('\n')}
@@ -819,7 +847,7 @@ function copyShare() {
 
 ${sprite.desc.split('\n')[0]}
 
-@全体群友 都来测测 🐾
+也来看看你会是哪只洛克王国精灵 🐾
 `;
   if (navigator.clipboard) {
     navigator.clipboard.writeText(txt).then(() => {
