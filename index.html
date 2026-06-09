@@ -531,7 +531,7 @@ function renderIntro() {
         <li>🎨 <b>你的属性与定位</b>（草/水/火/翼/光/暗/...）</li>
         <li>📊 <b>6 项种族值</b>（生命/物攻/魔攻/物防/魔防/速度）</li>
         <li>🩸 <b>血脉 + 稀有度</b>（普通/混血/污染/奇异 · 异色/炫彩）</li>
-        <li>📜 <b>训练师指南</b>（培养路线 / 出战风格 / 配队建议）</li>
+        <li>🧭 <b>精灵性格解析</b>（用洛克王国语言描述你的性格底色）</li>
         <li>🐾 <b>最佳组队精灵</b>（最匹配的另一位）</li>
       </ul>
       <p>预计 10-15 分钟。所有数据 <b>只在你的浏览器里</b>，<b>不会上传任何地方</b>。</p>
@@ -667,8 +667,8 @@ function renderResult() {
       <p style="white-space:pre-line">${sprite.desc}</p>
     </div>
     <div class="card result-section">
-      <h3>📜 训练师指南</h3>
-      <p style="font-size:12px;color:var(--muted);margin-bottom:8px">根据你的精灵定位、最高种族值、血脉和稀有度生成。</p>
+      <h3>🧭 精灵性格解析</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:8px">不是战斗攻略，而是把你的性格翻译成洛克王国的属性、血脉和种族值语言。</p>
       <ul style="padding-left:0;list-style:none">
         ${renderTrainerGuideList(sprite, s.stats, bloodline, rarity)}
       </ul>
@@ -750,17 +750,29 @@ function renderResult() {
 
 function restart() { state.step = 0; state.answers = new Array(75).fill(null); renderIntro(); }
 
-// 训练师指南：把原来的聊天提示转成洛克王国测试语境
+// 精灵性格解析：用洛克王国的属性、血脉、种族值语言描述性格
 function renderTrainerGuide(sprite, stats, bloodline, rarity) {
   const statList = Object.entries(stats).map(([key, stat]) => ({ key, ...stat })).sort((a, b) => b.val - a.val);
   const top = statList[0];
   const low = statList[statList.length - 1];
+  const attrMood = {
+    '火': '火属性让你像一团会走路的热源：表达直接、情绪来得快，喜欢把事情推着往前走。',
+    '水': '水属性让你更擅长感受气氛：你会绕开硬碰硬，用柔软的方式影响别人。',
+    '草': '草属性代表生长感：你慢热、有耐心，越熟悉的环境越能开花。',
+    '光': '光属性给你一种稳定的存在感：你不一定最吵，但很容易成为别人心里的安全锚点。',
+    '暗': '暗属性不是阴暗，而是保留感：你有自己的内心夜晚，不喜欢把全部情绪暴露出来。',
+    '翼': '翼属性让你天然带一点距离感：你需要自由空间，也讨厌被太多规则拴住。',
+    '武': '武属性代表行动优先：你更相信做出来的结果，而不是停在脑子里的推演。',
+    '魔': '魔属性代表想象力和精神世界：你对抽象的东西、氛围和隐喻更敏感。',
+    '龙': '龙属性代表强烈的自我结构：你不太适合被简单分类，越复杂越接近真实的你。',
+    '普通': '普通属性不是平庸，而是适配力：你能在不同关系里切换状态，不容易被单一标签定义。',
+  };
   const lines = [
-    `你的核心打法偏向 <b>${sprite.type}</b>，最适合走 <b>${top.name}</b> 优先的培养路线。`,
-    `${top.name} 高，说明你这只精灵在队伍里最擅长发挥「${top.desc}」这类作用。`,
-    `${low.name} 偏低，代表你不适合硬吃这类压力，最好让组队精灵帮你补位。`,
-    `${bloodline.type}血脉 + ${rarity}，说明你的稀有感主要来自「${bloodline.desc}」。`,
-    `实战建议：别把自己当万能精灵用，围绕 ${sprite.attr}属性 和 ${top.name} 优势配队，效果最好。`,
+    attrMood[sprite.attr] || `${sprite.attr}属性让你带着很强的个人气场，不太适合用普通标签概括。`,
+    `你的性格底色接近 <b>${sprite.name}</b>：${sprite.trait}。这代表你在人际里最自然的状态，不是你刻意扮演出来的样子。`,
+    `<b>${top.name}</b> 是你的最高种族值，说明你最突出的性格资源是「${top.desc}」——遇到事情时，你会优先调用这部分能力。`,
+    `<b>${low.name}</b> 相对最低，说明这不是你的第一反应区：不是缺点，只是你需要时间预热，或者需要合适的人帮你补上。`,
+    `<b>${bloodline.type}血脉</b>让你的性格带有「${bloodline.desc}」这种质感；${rarity} 则像你的稀有滤镜——越了解你，越会发现你不是量产型精灵。`,
   ];
   return lines;
 }
@@ -816,7 +828,7 @@ function downloadText() {
 你的画像:
 ${sprite.desc}
 
-训练师指南:
+精灵性格解析:
 ${renderTrainerGuideText(sprite, s.stats, bloodline, rarity)}
 
 📊 6 项种族值:
